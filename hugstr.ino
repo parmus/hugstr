@@ -27,8 +27,10 @@ const unsigned int edge = 270;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(num_leds, led_pin, NEO_GRB + NEO_KHZ800);
 
-unsigned long last_tick;
 const float max_power = 1000;
+const unsigned long steps = num_leds * 255;
+
+unsigned long last_tick;
 float power = start_charge * max_power;
 
 void setup() {
@@ -36,7 +38,6 @@ void setup() {
   Serial.begin(9600);
 #endif
 
-  pinMode(9, INPUT_PULLUP);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 }
@@ -71,7 +72,6 @@ boolean read_sensor(){
 }
 
 void set_bar(unsigned long value) {  // Should be 0-1000
-  unsigned long steps = strip.numPixels() * 255;
   unsigned int c;
   
   value = value * steps / max_power;
