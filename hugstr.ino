@@ -6,13 +6,16 @@
 //#define DEBUG
 
 // Cooldown and charging (in seconds)
-const float start_charge = 0.6;
-const float cooldown = 2*60;
-const float charge = 5;
+const float start_charge = 0.5;
+const float cooldown = 10*60;
+const float charge = 3;
+
+// Low blink
+const unsigned long low_blink_speed = 3000;
 
 // Warning blink
-const float warnlevel = 0.125;
-const unsigned long blink_speed = 400;
+const float warn_level = 0.125;
+const unsigned long warn_blink_speed = 400;
 
 // LED pin
 const unsigned int led_pin = 6;
@@ -30,7 +33,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(num_leds, led_pin, NEO_GRB + NEO_KHZ
 const float max_power = 1000;
 const unsigned long steps = num_leds * 255;
 
-unsigned long last_tick;
+unsigned long last_tick, tick;
 float power = start_charge * max_power;
 
 void setup() {
@@ -43,7 +46,7 @@ void setup() {
 }
 
 void loop() {
-  unsigned long tick = millis();
+  tick = millis();
   
   if (tick - last_tick > 10){
     float diff = float(tick - last_tick);
@@ -54,10 +57,14 @@ void loop() {
     }
     power = constrain(power, 0, max_power);
     
-    if (power < (warnlevel * max_power)){
-      set_bar((tick / blink_speed) % 2 == 0 ? int(power) : 0);
+    if (power == max_power){
+      full_power_animation();
+    } else if (power == 0){
+      empty_power();
+    } else if (power < (warn_level * max_power) && (tick / warn_blink_speed) % 2){
+      set_off();
     } else {
-      set_bar(int(power));
+      set_bar();
     }
     last_tick = tick;
   }
@@ -71,10 +78,32 @@ boolean read_sensor(){
   return (sensorValue < edge);
 }
 
-void set_bar(unsigned long value) {  // Should be 0-1000
-  unsigned int c;
+const long low_blink_speed_half = low_blink_speed / 2;
+void empty_power(){
+  long frame = tick % low_blink_speed;
+  long value = frame % low_blink_speed_half;
+  if (frame / low_blink_speed_half){
+    value = low_blink_speed_half - value;
+  }
+  strip.setPixelColor(0, strip.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
+  for(unsigned int i=1; i < strip.numPixels(); i++){
+    strip.setPixelColor(i, 0);
+  }
+  strip.show();
+}
+
+void set_off(){
+  for(unsigned int i=0; i < strip.numPixels(); i++){
+    strip.setPixelColor(i, 0);
+  }
+  strip.show();
+}
   
-  value = value * steps / max_power;
+void set_bar() {
+  unsigned int c;
+  unsigned long value;
+  
+  value = int(power) * steps / max_power;
   for(unsigned int i=0; i < strip.numPixels(); i++){
     c = min(value, 255);
     strip.setPixelColor(i, strip.Color(0, 0, c));
@@ -82,3 +111,22 @@ void set_bar(unsigned long value) {  // Should be 0-1000
   }
   strip.show();
 }
+
+void full_power_animation() {
+  uint32_t c = strip.Color(0, 255, 0);
+  for (int j=0; j<50; j++) {  //do 10 cycles of chasing
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, c);    //turn every third pixel on
+      }
+      strip.show();
+     
+      delay(50);
+     
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
