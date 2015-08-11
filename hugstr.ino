@@ -18,11 +18,11 @@ const float warn_level = 0.125;
 const unsigned long warn_blink_speed = 400;
 
 // LED pin
-const unsigned int led_pin = 6;
+const unsigned int led_pin = 0;
 const unsigned int num_leds = 16;
 
 // Sensor pin
-const int analogInPin = A9;
+const int analogInPin = 1;
 const unsigned int edge = 270;
 
 //==========================================
