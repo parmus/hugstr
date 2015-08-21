@@ -23,7 +23,7 @@ const unsigned int num_leds = 16;
 
 // Sensor pin
 const int analogInPin = 1;
-const unsigned int edge = 270;
+const unsigned int edge = 75;
 
 //==========================================
 
@@ -78,6 +78,10 @@ boolean read_sensor(){
   return (sensorValue < edge);
 }
 
+unsigned int led_index(unsigned int index){
+  return (index + 2) % 16;
+}
+
 const long low_blink_speed_half = low_blink_speed / 2;
 void empty_power(){
   long frame = tick % low_blink_speed;
@@ -85,16 +89,16 @@ void empty_power(){
   if (frame / low_blink_speed_half){
     value = low_blink_speed_half - value;
   }
-  strip.setPixelColor(0, strip.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
+  strip.setPixelColor(led_index(0), strip.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
   for(unsigned int i=1; i < strip.numPixels(); i++){
-    strip.setPixelColor(i, 0);
+    strip.setPixelColor(led_index(i), 0);
   }
   strip.show();
 }
 
 void set_off(){
   for(unsigned int i=0; i < strip.numPixels(); i++){
-    strip.setPixelColor(i, 0);
+    strip.setPixelColor(led_index(i), 0);
   }
   strip.show();
 }
@@ -106,7 +110,7 @@ void set_bar() {
   value = int(power) * steps / max_power;
   for(unsigned int i=0; i < strip.numPixels(); i++){
     c = min(value, 255);
-    strip.setPixelColor(i, strip.Color(0, 0, c));
+    strip.setPixelColor(led_index(i), strip.Color(0, 0, c));
     value = ( value>255 ? value - 255 : 0);
   }
   strip.show();
