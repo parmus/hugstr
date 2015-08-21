@@ -1,5 +1,5 @@
 /***********************************************
- * Casing for Hugstr
+ * Socket for Hugstr
  *
  * Version 4
  *
