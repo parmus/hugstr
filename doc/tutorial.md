@@ -113,14 +113,27 @@ The Arduino language supports two types of comments.
 
 #### Spaces, new lines and code style
 
-Notice that Arduino expressions are separated with ```;```, but the above programs also contains new lines, so each expression is on it's own line. This is only done to make the program more readable to humans, and is completely unnecessary for the computer. So are the spaces around the mathematical operators. We could also have written the above program completely without these extra newlines and spaces like so:
+Notice that Arduino expressions are separated with ```;```, but the above programs also contains new lines, so each expression is on it's own line. This is only done to make the program more readable to humans, and is completely unnecessary for the computer. So are the spaces around the *mathematical operators* (```+``` and ```/```). We could also have written the above program completely without these extra newlines and spaces like so:
 
 ```C++
 2+2;40/10;
 ```
-contains 3 mathematical expressions. Notice that the line spaces and newlines doesn't matter for the computer. The extra empty line between the first expression and the rest will simply be ignored, just as the lack of newline between the second and the third expression. 
 
+However this is very difficult for us humans to read, so we add extra spaces and new lines to *shape* the program for our readability.
 
+In the rest of this document, we will stick with the convention of having a new line after each ```;```, so we only get one expression per line. And we will always have spaces around mathematical operators.
+
+#### Variables and datatypes
+
+So far our example programs have been rather useless, because the results from the mathematical expressions have just been thrown away and forgotten. So let's start saving the results for later:
+
+```C++
+int a = 2 + 2;
+int b = 40 / 10;
+int c = a + b;
+```
+
+This program will create 3 *variables* named ```a```, ```b``` and ```c```. We can think of a variable as bucket, which we can put data into.
 
 ### Setting up your Arduino programming environment
 
@@ -138,9 +151,6 @@ void loop() {
 
 ### Our first Arduino program
 
-### The basics
-
-### Variables and datatypes
 
 '''
 int a = 2;
