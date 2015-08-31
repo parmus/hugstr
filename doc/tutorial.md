@@ -80,16 +80,14 @@ Now, let's leave the egg boiling recipe for now and look at some real code. We w
 
 The programming language used to program the Arduino microcomputer is based on a very old and well-known computer language called **C++**, however the Arduino language is much smaller and easier to use. We will return to the relationship between C++ and the Arduino laungage in the end of this chapter, but for now you don't have to worry about C++ at all.
 
-The entire Arduino language is documented in a nice reference on the Arduino website: https://www.arduino.cc/en/Reference/HomePage
-
-However in the following sections we will look at just the small subset you need to work with the Hugstr project. Let's get started with an examples:
+The entire Arduino language is documented in a nice [Language Reference](https://www.arduino.cc/en/Reference/HomePage) reference on the Arduino website. However you don't need to know all of the Arduino language to work with the Hugstr project, so in the following sections we will introduce just the small subset that you need. Let's get started with an examples:
 
 ```C++
 2 + 2;
-42 / 10;
+40 / 10;
 ```
 
-An Arduino program is composed from a number of *expressions* separated ```;```. The program above is a rather boring program, which will calculate the 2 mathematical expressions, but do absolutely nothing with the results; they will simply just be thrown away.
+An Arduino program is composed from a number of *expressions* separated ```;```. The program above is a rather boring program, which will calculate the two mathematical expressions, but do absolutely nothing with the results; they will simply just be thrown away.
 
 #### Comments
 
@@ -98,7 +96,7 @@ An Arduino program can also contain *comments*, which are blocks of texts, which
 ```C++
 // This is a comment
 2 + 2; // This is also a comment
-42 / 10;
+40 / 10;
 /* This is a multiline comment
    spanning multiple lines */
 ```
@@ -123,17 +121,111 @@ However this is very difficult for us humans to read, so we add extra spaces and
 
 In the rest of this document, we will stick with the convention of having a new line after each ```;```, so we only get one expression per line. And we will always have spaces around mathematical operators.
 
-#### Variables and datatypes
+#### A first look at variables
 
-So far our example programs have been rather useless, because the results from the mathematical expressions have just been thrown away and forgotten. So let's start saving the results for later:
+So far our example programs have been rather useless, because the results from the mathematical expressions have just been thrown away and forgotten. To be able to remember things we use *variables*. We can think of a variable as bucket in which we can store same data, so we can use it later in the same program. For example, a computer game can have a variable to remember how many points you have scored.
+
+In the Arduino language a variable has to *declared*, which means we have to tell the computer what name we want to have for our variable, and what kind of data we would like to store in it; what we call the *data type*. Let's not worry about data types right now and just stick with using numbers, specifically *integers*. We will return to data types later on.
+
+Let's look at an example:
 
 ```C++
-int a = 2 + 2;
-int b = 40 / 10;
-int c = a + b;
+int a;
+int b;
+int c;
+
+a = 2 + 2;    // a will now contain 4
+b = 40 / 10;  // b will now contain 4 
+c = a + b;    // c will now contain 8
 ```
 
-This program will create 3 *variables* named ```a```, ```b``` and ```c```. We can think of a variable as bucket, which we can put data into.
+This program will create 3 *variables* named ```a```, ```b``` and ```c```. The *int* in front of the variable tells the computer that we want variables for storing an *integers*. Once we've declared a variable we can start using it. We can store a value in the variable using ```=```.
+Notice that the computer program will be run line by line, and so when a variable is being used in an expression, it will be the value that the variable contain *at the time*. Here's an example:
+
+```C++
+int a;
+int b;
+
+a = 2;      // a will now contain 2
+b = a + 3;  // b will now contain 5, because a contained 2 at the time
+a = 6;      // a will now contain 6, but b will still contain 5
+b = b * 2;  // b will now contain 10
+```
+
+Notice in the last line that a variable can be used on both sides of ```=``` in an expression. This is because the value is first calculated on the right side and then it's assigned on the left.
+
+Variables can also be *initialized* as part of their declaration, which basically just mean that we put some data into them right away. The previous program could also have been written as:
+
+```C++
+int a = 2;      // a is initialized to 2
+int b = a + 3;  // b is initialized to 5, because a contained 2 at the time
+
+a = 6;          // a will now contain 6, but b will still contain 5
+b = b * 2;      // b will now contain 10
+```
+
+### Control structures
+
+So far our programs have only consisted of very simple expressions, which have been executed one-by-one. But what if we want the program to do something different depending on the situation, e.g. depending on the value of a variable? This is what *control structures* are for.
+Look back at our recipe for boiling eggs in the very first section. Those *If*...*then* and *while*...*do* structures we add, those are control structures.
+
+The Arduino language have a number of different control structures, which are all documented in the [Arduino Language Reference](https://www.arduino.cc/en/Reference/HomePage). In this tutorial we will just look at a few simple ones.
+
+#### Conditions and comparisons
+
+Before we start talking about the specific control structures, we need to talk a bit about *conditions*.
+
+A condition is simply an expression, which is either *true* or *false*. Here are some examples:
+
+```C++
+int a = 2;
+int b = 1;
+
+a > b;      // This is true, because 2 is indeed greater than 1
+b = b + 2;  // b now contain 3
+a > b;      // This is now false, because 2 is not greater than 3
+```
+
+A condition in the Arduino language is *almost* always a comparison of something, and ```>``` is known as a *comparison operator*. The Arduino language contain a number of different comparison operators:
+
+Operator | Example      | Meaning
+---------|--------------|------------------------
+```>```  | ```a > b```  | a is greater than b
+```<```  | ```a < b```  | a is less than b
+```>=``` | ```a >= b``` | a is greater than or equal to b
+```<=``` | ```a <= b``` | a is less than or equal to b
+```==``` | ```a == b``` | a is equal to b
+```!=``` | ```a != b``` | a is not equal to b
+
+Notice that ```=``` and ```==``` are two different things. ```=``` is the *assignment operator*, which is used to put data into a variable. ```==``` is the *equal comparison operator*, which compares is two things have the same value.
+
+Sometimes we want to combine several comparisons to a more complex condition, which we will discuss a later in this tutorial.
+
+
+#### ```if``` and ```if...else```
+
+```if``` is the simplest of the control structures, and it works pretty much exactly the *if...then* in the egg boilding recipe. The basic format for an ```if``` control structure looks like this:
+
+
+```C++
+if (/* Some condition here*/){
+  /* Some code to run, if the condition is true */
+}
+```
+
+
+
+
+#### ```for```
+
+
+#### ```while``` and ```do...while```
+
+
+#### ```break``` and ```continue```
+
+
+
 
 ### Setting up your Arduino programming environment
 
@@ -179,7 +271,6 @@ void loop() {
 }
 '''
 
-### Control structures
 
 
 
