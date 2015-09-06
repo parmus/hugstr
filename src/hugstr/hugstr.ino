@@ -3,8 +3,6 @@
 //==========================================
 //             Configuration
 
-//#define DEBUG
-
 // Cooldown and charging (in seconds)
 const float start_charge = 0.5;
 const float cooldown = 10*60;
@@ -37,10 +35,6 @@ unsigned long last_tick, tick;
 float power = start_charge * max_power;
 
 void setup() {
-#ifdef DEBUG
-  Serial.begin(9600);
-#endif
-
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 }
@@ -72,9 +66,6 @@ void loop() {
 
 boolean read_sensor(){
   int sensorValue = analogRead(analogInPin);
-#ifdef DEBUG
-  Serial.println(sensorValue);
-#endif
   return (sensorValue < edge);
 }
 
