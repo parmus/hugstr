@@ -4,122 +4,124 @@
 //             Configuration
 
 // Cooldown and charging (in seconds)
-const float start_charge = 0.5;
-const float cooldown = 10*60;
-const float charge = 3;
+const float startPower = 0.5;
+const float cooldownTime = 10*60;
+const float chargeTime = 3;
 
 // Low blink
-const unsigned long low_blink_speed = 3000;
+const unsigned long lowBlinkSpeed = 3000;
 
 // Warning blink
-const float warn_level = 0.125;
-const unsigned long warn_blink_speed = 400;
+const float warnLevel = 0.125;
+const unsigned long warnBlinkSpeed = 400;
 
-// LED pin
-const unsigned int led_pin = 0;
-const unsigned int num_leds = 16;
+// LEDs
+const unsigned int LEDPin = 0;
+const unsigned int numLEDs = 16;
 
-// Sensor pin
-const int analogInPin = 1;
-const unsigned int edge = 75;
+// Touch sensor
+const int TouchSensorPin = 1;
+const unsigned int TouchSensitivity = 75;  // Higher number -> more sensitive
 
 //==========================================
 
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(num_leds, led_pin, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel LEDs = Adafruit_NeoPixel(numLEDs, LEDPin, NEO_GRB + NEO_KHZ800);
 
-const float max_power = 1000;
-const unsigned long steps = num_leds * 255;
+const float maxPower = 1000;
+const unsigned long steps = numLEDs * 255;
 
-unsigned long last_tick, tick;
-float power = start_charge * max_power;
+unsigned long lastTick, tick;
+float power = startPower * maxPower;
 
 void setup() {
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  pinMode(TouchSensorPin, INPUT_PULLUP);
+
+  LEDs.begin();
+  LEDs.show(); // Initialize all pixels to 'off'
 }
 
 void loop() {
   tick = millis();
   
-  if (tick - last_tick > 10){
-    float diff = float(tick - last_tick);
-    if (read_sensor()){
-      power += diff / charge;
+  if (tick - lastTick > 10){
+    float diff = float(tick - lastTick);
+    if (isHugging()){
+      power += diff / chargeTime;
     } else {
-      power -= diff / cooldown;
+      power -= diff / cooldownTime;
     }
-    power = constrain(power, 0, max_power);
+    power = constrain(power, 0, maxPower);
     
-    if (power == max_power){
-      full_power_animation();
+    if (power == maxPower){
+      fullPowerAnimation();
     } else if (power == 0){
-      empty_power();
-    } else if (power < (warn_level * max_power) && (tick / warn_blink_speed) % 2){
-      set_off();
+      emptyPower();
+    } else if (power < (warnLevel * maxPower) && (tick / warnBlinkSpeed) % 2){
+      setOff();
     } else {
-      set_bar();
+      setBar();
     }
-    last_tick = tick;
+    lastTick = tick;
   }
 }
 
-boolean read_sensor(){
-  int sensorValue = analogRead(analogInPin);
-  return (sensorValue < edge);
+boolean isHugging(){
+  int sensorValue = analogRead(TouchSensorPin);
+  return (sensorValue < TouchSensitivity);
 }
 
-unsigned int led_index(unsigned int index){
+unsigned int LEDIndex(unsigned int index){
   return (index + 2) % 16;
 }
 
-const long low_blink_speed_half = low_blink_speed / 2;
-void empty_power(){
-  long frame = tick % low_blink_speed;
+const long low_blink_speed_half = lowBlinkSpeed / 2;
+void emptyPower(){
+  long frame = tick % lowBlinkSpeed;
   long value = frame % low_blink_speed_half;
   if (frame / low_blink_speed_half){
     value = low_blink_speed_half - value;
   }
-  strip.setPixelColor(led_index(0), strip.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
-  for(unsigned int i=1; i < strip.numPixels(); i++){
-    strip.setPixelColor(led_index(i), 0);
+  LEDs.setPixelColor(LEDIndex(0), LEDs.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
+  for(unsigned int i=1; i < LEDs.numPixels(); i++){
+    LEDs.setPixelColor(LEDIndex(i), 0);
   }
-  strip.show();
+  LEDs.show();
 }
 
-void set_off(){
-  for(unsigned int i=0; i < strip.numPixels(); i++){
-    strip.setPixelColor(led_index(i), 0);
+void setOff(){
+  for(unsigned int i=0; i < LEDs.numPixels(); i++){
+    LEDs.setPixelColor(LEDIndex(i), 0);
   }
-  strip.show();
+  LEDs.show();
 }
   
-void set_bar() {
+void setBar() {
   unsigned int c;
   unsigned long value;
   
   value = int(power) * steps / max_power;
-  for(unsigned int i=0; i < strip.numPixels(); i++){
+  for(unsigned int i=0; i < LEDs.numPixels(); i++){
     c = min(value, 255);
-    strip.setPixelColor(led_index(i), strip.Color(0, 0, c));
+    LEDs.setPixelColor(LEDIndex(i), LEDs.Color(0, 0, c));
     value = ( value>255 ? value - 255 : 0);
   }
-  strip.show();
+  LEDs.show();
 }
 
-void full_power_animation() {
-  uint32_t c = strip.Color(0, 255, 0);
+void fullPowerAnimation() {
+  uint32_t c = LEDs.Color(0, 255, 0);
   for (int j=0; j<50; j++) {  //do 10 cycles of chasing
     for (int q=0; q < 3; q++) {
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, c);    //turn every third pixel on
+      for (int i=0; i < LEDs.numPixels(); i=i+3) {
+        LEDs.setPixelColor(i+q, c);    //turn every third pixel on
       }
-      strip.show();
+      LEDs.show();
      
       delay(50);
      
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      for (int i=0; i < LEDs.numPixels(); i=i+3) {
+        LEDs.setPixelColor(i+q, 0);        //turn every third pixel off
       }
     }
   }
