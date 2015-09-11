@@ -8,122 +8,134 @@ const float startPower = 0.5;
 const float cooldownTime = 10*60;
 const float chargeTime = 3;
 
-// Low blink
-const unsigned long lowBlinkSpeed = 3000;
-
 // Warning blink
 const float warnLevel = 0.125;
 const unsigned long warnBlinkSpeed = 400;
 
-// LEDs
-const unsigned int LEDPin = 0;
-const unsigned int numLEDs = 16;
+// Low blink
+const unsigned long lowBlinkSpeed = 3000;
+
+// NeoPixel ring ing
+const unsigned int ringPin = 0;
+const unsigned int ringSize = 16;
+const unsigned int ringStartOffset = 2;
 
 // Touch sensor
-const int TouchSensorPin = 1;
-const unsigned int TouchSensitivity = 75;  // Higher number -> more sensitive
+const unsigned int TouchSensorPin = 1;
+const unsigned int TouchSensitivity = 100;  // Higher number -> more sensitive
 
 //==========================================
 
 
-Adafruit_NeoPixel LEDs = Adafruit_NeoPixel(numLEDs, LEDPin, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel ring = Adafruit_NeoPixel(ringSize, ringPin, NEO_GRB + NEO_KHZ800);
 
+const uint32_t RED = Adafruit_NeoPixel::Color(255, 0, 0);
+const uint32_t GREEN = Adafruit_NeoPixel::Color(0, 255, 0);
+const uint32_t BLUE = Adafruit_NeoPixel::Color(0, 0, 255);
 const float maxPower = 1000;
-const unsigned long steps = numLEDs * 255;
 
-unsigned long lastTick, tick;
-float power = startPower * maxPower;
 
 void setup() {
   pinMode(TouchSensorPin, INPUT_PULLUP);
 
-  LEDs.begin();
-  LEDs.show(); // Initialize all pixels to 'off'
+  ring.begin();
+  ring.show();
 }
 
 void loop() {
-  tick = millis();
+  static float power = startPower * maxPower;
+  static unsigned long lastTick = 0;
   
-  if (tick - lastTick > 10){
-    float diff = float(tick - lastTick);
-    if (isHugging()){
-      power += diff / chargeTime;
+  unsigned long tick = millis();
+  unsigned long timePassed = tick - lastTick;
+  
+  if (timePassed > 10){
+    if (analogRead(TouchSensorPin) < TouchSensitivity){
+      power += timePassed / chargeTime;
     } else {
-      power -= diff / cooldownTime;
+      power -= timePassed / cooldownTime;
     }
     power = constrain(power, 0, maxPower);
     
     if (power == maxPower){
-      fullPowerAnimation();
+      fullPowerAnimation(GREEN);
     } else if (power == 0){
-      emptyPower();
-    } else if (power < (warnLevel * maxPower) && (tick / warnBlinkSpeed) % 2){
-      setOff();
+      // Empty power
+      ring.clear();
+      ring.setPixelColor(LEDIndex(0), pulse(RED, tick, lowBlinkSpeed));
+      ring.show();
+    } else if (power < (warnLevel * maxPower)){
+      setBar(power, maxPower, blink(BLUE, tick, warnBlinkSpeed));
     } else {
-      setBar();
+      setBar(power, maxPower, BLUE);
     }
     lastTick = tick;
   }
 }
 
-boolean isHugging(){
-  int sensorValue = analogRead(TouchSensorPin);
-  return (sensorValue < TouchSensitivity);
-}
 
-unsigned int LEDIndex(unsigned int index){
-  return (index + 2) % 16;
-}
-
-const long low_blink_speed_half = lowBlinkSpeed / 2;
-void emptyPower(){
-  long frame = tick % lowBlinkSpeed;
-  long value = frame % low_blink_speed_half;
-  if (frame / low_blink_speed_half){
-    value = low_blink_speed_half - value;
-  }
-  LEDs.setPixelColor(LEDIndex(0), LEDs.Color(map(value, 0, low_blink_speed_half, 0, 90), 0, 0));
-  for(unsigned int i=1; i < LEDs.numPixels(); i++){
-    LEDs.setPixelColor(LEDIndex(i), 0);
-  }
-  LEDs.show();
-}
-
-void setOff(){
-  for(unsigned int i=0; i < LEDs.numPixels(); i++){
-    LEDs.setPixelColor(LEDIndex(i), 0);
-  }
-  LEDs.show();
-}
+void setBar(unsigned long value, unsigned long maxValue, uint32_t color) {
+  word steps = ring.numPixels() * 255;
   
-void setBar() {
-  unsigned int c;
-  unsigned long value;
-  
-  value = int(power) * steps / max_power;
-  for(unsigned int i=0; i < LEDs.numPixels(); i++){
-    c = min(value, 255);
-    LEDs.setPixelColor(LEDIndex(i), LEDs.Color(0, 0, c));
-    value = ( value>255 ? value - 255 : 0);
+  word stepper = (value * steps) / maxValue;
+  for(byte i=0; i < ring.numPixels(); i++){
+    ring.setPixelColor(LEDIndex(i), scaleColor(color, uint8_t(min(stepper, 255))));
+    stepper = ( stepper>255 ? stepper - 255 : 0);
   }
-  LEDs.show();
+  ring.show();
 }
 
-void fullPowerAnimation() {
-  uint32_t c = LEDs.Color(0, 255, 0);
-  for (int j=0; j<50; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < LEDs.numPixels(); i=i+3) {
-        LEDs.setPixelColor(i+q, c);    //turn every third pixel on
+
+void fullPowerAnimation(uint32_t color) {
+  for (byte repeat=0; repeat<50; repeat++) {
+    for (byte offset=0; offset < 3; offset++) {
+      ring.clear();
+      for (byte i=0; i < ring.numPixels(); i=i+3) {
+        ring.setPixelColor(i+offset, color);
       }
-      LEDs.show();
+      ring.show();
      
       delay(50);
-     
-      for (int i=0; i < LEDs.numPixels(); i=i+3) {
-        LEDs.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
     }
   }
+}
+
+
+/* Calculate a color, which pulses over time.
+ * period is the speed of the blink in milliseconds.
+ * tick is the time now in milliseconds, usually taken from millis()
+ */
+unsigned long pulse(uint32_t color, unsigned long tick, unsigned long period){
+    unsigned long value = tick % period;
+    value = (value < (period / 2) ? value : period - value);
+    return scaleColor(color, map(value, 0, (period / 2), 0, 255));
+}
+
+
+/* Calculate a color, which is blinking over time.
+ * period is the speed of the blink in milliseconds.
+ * tick is the time now in milliseconds, usually taken from millis()
+ */
+unsigned long blink(uint32_t color, unsigned long tick, unsigned long period){
+    return ((tick % period) < (period / 2) ? color : 0);
+}
+
+
+/* Scale (dim) a color in brightness.
+ * The brightness parameter must be between 0 (completely off) and 255 (full brightness)
+ */
+uint32_t scaleColor(uint32_t color, uint8_t brightness){
+  uint8_t red = (uint8_t)(color >> 16);
+  uint8_t green = (uint8_t)(color >> 8);
+  uint8_t blue = (uint8_t)(color);
+  return Adafruit_NeoPixel::Color((red * brightness) >> 8, (green * brightness) >> 8, (blue * brightness) >> 8);
+}
+
+
+/* Calculate new LED index by adding an offset. This allows you to decide which LED, should
+ * be the first.
+ */
+byte LEDIndex(byte index){
+  return (index + ringStartOffset) % ring.numPixels();
 }
 

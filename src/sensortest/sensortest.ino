@@ -18,6 +18,8 @@ Adafruit_NeoPixel LEDs = Adafruit_NeoPixel(numLEDs, LEDPin, NEO_GRB + NEO_KHZ800
 
 const uint32_t RED = Adafruit_NeoPixel::Color(255, 0, 0);
 const uint32_t GREEN = Adafruit_NeoPixel::Color(0, 255, 0);
+const uint32_t BLUE = Adafruit_NeoPixel::Color(0, 0, 255);
+
 const unsigned long maxValue = TouchSensitivity * 2;
 
 unsigned long lastTick;
